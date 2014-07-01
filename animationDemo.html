@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+   
+
+    <title>Loveriod</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../dist/css/custom_template.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="\">Loveroid Project</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li ><a href="\">Home</a></li>
+            <li><a href="#about">About</a></li>
+              <li class="active"><a href="\experiment.html">Experiment</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul> 
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h1>Experiment</h1>
+        <p class="lead">Press 's' to speak. Press up, left, right to move</p>
+        <div id="animationCanvas"></div>
+      </div>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="../../dist/js/pixi.js"></script>
+      <script src="../../dist/js/mousetrap.min.js"></script>
+      <script src="../../dist/js/soundmanager2-jsmin.js"></script>
+      
+      <script>
+      var assetsToLoader = [ "https://dl.dropboxusercontent.com/u/5506196/animationDemo/girlAnime.json"];
+      var loader = new PIXI.AssetLoader(assetsToLoader);
+      // use callback
+	loader.onComplete = onAssetsLoaded
+
+	//begin load
+	loader.load();
+    var stage = new PIXI.Stage(0x66FF99);
+         var renderer = PIXI.autoDetectRenderer(800, 600);
+          document.getElementById("animationCanvas").appendChild(renderer.view);
+          requestAnimFrame(animate);
+          var legMoveFrames;
+          var speakFrames;
+          var waveFrames;
+          var girl;
+          var currentIndex=0;
+          var currentFrameIndex=0;
+          var frames;
+          var isFlyingDown=false;
+          var isFlyingUp=false;
+          var state=3; //3 still, 2,fly, 1,speak,0 walk
+          var changeState=false;
+          var isWalking=false;
+          var walkingDirection=0; //0 left, 1 right
+          var bgmusic;
+          var walksound;
+          var isSpeaking=false;
+          var speakSound;
+          var flySound;
+          var smanager=soundManager.setup({
+           onready:createSound
+          });
+         
+          
+    function createSound(){
+
+     walksound=   soundManager.createSound({
+ id:'wsound',
+
+    autoLoad: true,
+ url: 'assets/walk.mp3'
+});        
+           speakSound=   soundManager.createSound({
+ id:'ssound',
+autoLoad: true,
+    
+ url: 'assets/speak.mp3'
+});  
+                  flySound=   soundManager.createSound({
+ id:'fsound',
+
+  autoLoad: true,  
+ url: 'assets/fly.mp3'
+});  
+               bgmusic=   soundManager.createSound({
+ id:'bmusic',
+
+    
+ url: 'https://dl.dropboxusercontent.com/u/5506196/animationDemo/bg2.mp3'
+});
+   loopSound(bgmusic);     
+    }
+          function playWalksound(sound){
+          if(isWalking){
+          sound.play({onfinish:function(){
+          playWalksound(sound);
+          }
+                      
+          });
+          }
+          }
+          function playSpeaksound(sound){
+           if(isSpeaking){
+          sound.play({onfinish:function(){
+          playSpeaksound(sound);
+          }
+                      
+          });
+          }
+          }
+           function playFlysound(sound){
+           if(isFlyingDown||isFlyingUp){
+          sound.play({onfinish:function(){
+          playFlysound(sound);
+          }
+                      
+          });
+          }
+          }
+    function loopSound(sound){
+          sound.play({onfinish:function(){
+          loopSound(sound);
+          }
+        });
+          }
+     
+    function onAssetsLoaded()
+	{
+        
+         // create a texture from an image path
+    var texture = PIXI.Texture.fromImage("https://dl.dropboxusercontent.com/u/5506196/animationDemo/bg.png");
+    // create a new Sprite using the texture
+    var bg = new PIXI.Sprite(texture);
+ stage.addChild(bg);
+		legMoveFrames=[];
+        speakFrames=[];
+        waveFrames=[];
+        for (var i = 0; i < 63; i++) {
+			
+			var val = i < 10 ? "0" + i : i;
+
+			legMoveFrames.push("legMove__0" + val + ".png");
+            speakFrames.push("speak__0" + val + ".png");
+            waveFrames.push("girlwave__0" + val + ".png");
+
+		};
+		girl = PIXI.Sprite.fromFrame("girlwave__000.png");
+		// start animating
+        girl.position.x=200;
+        girl.position.y=200;
+        stage.addChild(girl);
+		
+    frames=[legMoveFrames,speakFrames,waveFrames];
+     Mousetrap.bind('up', flyup);
+      Mousetrap.bind('up', flydown,'keyup');  
+        Mousetrap.bind('s', speakup);
+      Mousetrap.bind('s', speakstop,'keyup');  
+        Mousetrap.bind('right', goright);   
+        Mousetrap.bind('right', stopwalk,'keyup'); 
+        Mousetrap.bind('left', goleft);  
+         Mousetrap.bind('left', stopwalk,'keyup');   
+        requestAnimFrame(animate);
+	}
+    function flyup(){
+        isFlyingUp=true;
+        if(state!=2){
+        state=2;
+            girl.position.x-=24;
+            playFlysound(flySound);
+        }
+        
+       
+    }
+          
+    function flydown(){
+        isFlyingUp=false;
+     isFlyingDown=true;
+    }
+    function speakup(){
+        if(!isFlyingDown&&!isFlyingDown){
+            if(state!=1){
+                state=1;
+                isSpeaking=true;
+                playSpeaksound(speakSound);
+            }
+         
+        }
+    }
+      function speakstop(){
+        if(!isFlyingDown&&!isFlyingDown){
+            state=3;
+           
+        }
+         isSpeaking=false;
+        }
+          function goright(){
+           if(!isFlyingDown&&!isFlyingDown){
+            if(state!=0){
+            state=0;
+                isWalking=true;
+                playWalksound(walksound);
+            }
+           }
+             /* if(girl.position.x<600){
+               girl.position.x+=2;
+              }*/
+              walkingDirection=1;
+          }
+          function goleft(){
+          if(!isFlyingDown&&!isFlyingDown){
+            if(state!=0){
+            state=0;
+                 isWalking=true;
+                 playWalksound(walksound);
+            }
+           }
+             /* if(girl.position.x>0){
+               girl.position.x-=2;
+              }*/
+               walkingDirection=0;
+          }
+          
+          function stopwalk(){
+          if(!isFlyingDown&&!isFlyingDown){
+            if(state!=3){
+            state=3;
+            }
+           }
+              isWalking=false;
+          }
+    function animate() {
+	    requestAnimFrame( animate );
+	   
+     //   console.log(frames[2][currentIndex]);
+        if(state==3){
+      // console.log(girl.position.x);
+		girl.setTexture(PIXI.Texture.fromFrame(frames[0][0]));
+        }
+        else{
+         girl.setTexture(PIXI.Texture.fromFrame(frames[state][currentIndex]));   
+        }
+      currentIndex+=1;
+                                   
+        if(currentIndex>62){
+        currentIndex=0;
+        }
+        
+        if(isFlyingDown){
+         if(girl.position.y>=200){
+             girl.position.y=200;
+             isFlyingDown=false;
+               if(state==2){
+                   girl.position.x+=24;
+                   state=3;
+                girl.setTexture(PIXI.Texture.fromFrame(frames[0][0]));
+               }
+            
+             
+         }
+            else{
+            girl.position.y+=2;
+            }
+        }
+        else if(isFlyingUp){
+         if(girl.position.y>1){
+             girl.position.y-=1;
+         }
+            // console.log("flyup");
+        }
+         else if(isWalking){
+            if(walkingDirection==0 &&girl.position.x>0){
+                girl.position.x-=1;
+            }
+             else if(walkingDirection==1 &&girl.position.x<550){
+                girl.position.x+=1;
+            }
+         }   
+       
+         renderer.render(stage);
+	}
+     
+      </script>
+  </body>
+</html>
